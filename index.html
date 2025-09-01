@@ -11,8 +11,7 @@
   :root{
     --bg:#0b0b0f;--card:#151821;--text:#e8eef6;--muted:#5c6e83;--acc:#48d1b5;--red:#ff7575;--input:#0f1218;--border:#23304a;
     --p:#2aa1ff;--f:#ffb454;--c:#48d1b5;
-    --axis:rgba(255,255,255,.9);--grid:rgba(255,255,255,.12);--axisLine:rgba(255,255,255,.35);
-    --chart-blur:4px; /* ← 軽め＆綺麗なぼかし量（必要なら3.5〜4.5で微調整） */
+    --axis:rgba(255,255,255,.9);--grid:rgba(255,255,255,.12);--axisLine:rgba(255,255,255,.35)
   }
   .light{
     --bg:#f6f8fb;--card:#ffffff;--text:#1a2732;--muted:#5c6e83;--acc:#0aa37f;--red:#d13b3b;--input:#ffffff;--border:#dfe8f2;
@@ -86,17 +85,15 @@
   .light .footerNote{color:#000 !important}
   .footerNote a{color:var(--p);text-decoration:underline}
 
-  /* ===== ここから：見えないけど操作できる“上品なぼかし” ===== */
+  /* ===== “ぼかし（モザイク風）” ===== */
   .blurTxt{
-    filter: blur(4px) saturate(0.96) contrast(0.96) brightness(1.02);
-    pointer-events:none;    /* 文字はクリック拾わない（ボタン本体は拾う） */
+    filter: blur(6px) saturate(0.8) contrast(0.9);
+    pointer-events:none;
     user-select:none;
   }
-  .softBlur{
-    /* キャンバスや数値を上品にぼかす（読めないが圧迫感なし） */
-    filter: blur(var(--chart-blur)) saturate(0.96) contrast(0.96) brightness(1.02);
+  .mosaic{
+    filter: blur(6px) saturate(0.85) contrast(0.9);
   }
-  /* ============================================================ */
 </style>
 </head>
 <body>
@@ -217,7 +214,7 @@
     </div>
   </div>
 
-  <!-- 基礎データ（そのまま表示） -->
+  <!-- 基礎データ -->
   <div class="card" id="baseCard" style="display:none" aria-live="polite">
     <h3>基礎データ</h3>
     <div class="row3">
@@ -228,7 +225,7 @@
     <div class="small" id="bmiClassTxt" style="margin-top:8px;opacity:.9"></div>
   </div>
 
-  <!-- あなたのプラン（移行期間・目標糖質量のみ ??? 表示） -->
+  <!-- あなたのプラン -->
   <div class="card" id="nowGoalCard" style="display:none">
     <h3>あなたのプラン</h3>
     <div class="row3">
@@ -239,12 +236,13 @@
       <div class="kpi">
         <div class="small">移行期間</div>
         <div style="display:flex;gap:8px;justify-content:center;align-items:baseline">
-          <span id="weeksNum" class="huge">–</span><span class="small">週間</span>
+          <!-- ここを huge -> big に変更 -->
+          <span id="weeksNum" class="big">–</span><span class="small">週間</span>
         </div>
       </div>
       <div class="kpi">
         <div class="small">目標の糖質量</div>
-        <b id="goalCarb">100</b><div class="small">g/日</div>
+        <b>100</b><div class="small">g/日</div>
       </div>
     </div>
     <div class="small" id="repValuesNote" style="margin-top:8px;opacity:.95">
@@ -252,7 +250,7 @@
     </div>
   </div>
 
-  <!-- あなたの目安（TRANSITION DIET）— 数値は ??? 表示 -->
+  <!-- あなたの目安（TRANSITION DIET） -->
   <div class="card" id="macroCard" style="display:none" aria-live="polite">
     <h3>あなたの目安（TRANSITION DIET）</h3>
     <div class="kpi" style="margin-bottom:10px">
@@ -303,12 +301,10 @@
         <div class="chartHeader">
           <div class="small" id="chartTitle" style="font-weight:700"><span class="blurTxt">期間</span></div>
           <div class="chartBtns" id="weekBtns" role="tablist" aria-label="期間（週）">
-            <!-- 1週目〜動的（ラベルはぼかし） -->
+            <!-- 1週目〜動的（ラベルは後述でぼかし） -->
           </div>
         </div>
-        <!-- グラフ本体：軽めで綺麗なぼかし -->
-        <canvas id="wtChart" class="softBlur" height="260" aria-label="糖質量推移グラフ" role="img"></canvas>
-        <!-- 吹き出しの文字もぼかし -->
+        <canvas id="wtChart" class="mosaic" height="260" aria-label="糖質量推移グラフ" role="img"></canvas>
         <div id="chartTip" class="tip blurTxt" style="display:none"></div>
         <div class="small" id="chartNote" style="margin-top:8px;opacity:.95;text-align:center">
           ※このグラフは目安です。体調に応じて調整してください。<br>
@@ -429,13 +425,13 @@ function estimateFromUnknown(){
   const bowls  = $("riceSel")?.selectedOptions[0]?.dataset?.bowls ? +$("riceSel").selectedOptions[0].dataset.bowls : 0;
   const pieces = $("breadSel")?.selectedOptions[0]?.dataset?.pieces ? +$("breadSel").selectedOptions[0].dataset.pieces : 0;
   const fists  = $("rootsSel")?.selectedOptions[0]?.dataset?.fists ? +$("rootsSel").selectedOptions[0].dataset.fists : 0;
-  const riceG = bowls * 55;  // 茶碗1杯=55g
-  const breadG= pieces*25;   // 1枚(個)=25g
-  const rootG = fists *20;   // 拳1個分=20g
+  const riceG = bowls * 55;
+  const breadG= pieces*25;
+  const rootG = fists *20;
   return riceG + breadG + rootG + 30; // 隠れ糖質+30g
 }
 
-/* 現在の糖質量（非unknownは目安、400g以上は475） */
+/* 現在の糖質量 */
 function currentCarbValue(sex){
   const v = $("curCarbSel").value;
   if(v==="unknown"){
@@ -496,7 +492,7 @@ function enforceFatFloor(protein_g, carb_g, fat_g, body_w){
   return {protein_g, carb_g, fat_g, adjusted:true, reason:"※脂質下限（0.6 g/kg）確保のため、糖質→タンパク質の順で自動調整しました。"};
 }
 
-/* 電解質推定 */
+/* 電解質 */
 function estimateElectrolytes(habit, fitnessType, currentCarb, w, age){
   const af = parseFloat(habit)||1.2;
   const scaleAF = clamp((af - 1.2) / (1.9 - 1.2), 0, 1);
@@ -551,7 +547,7 @@ function computeFoodDistribution(kcalTotal, fitnessType){
   return { kMeat,kFish,kEggs,kDairy,kGroot,kFruit };
 }
 
-/* 週関連 */
+/* 週あたり運動日 */
 function trainingDaysPerWeek(habit){
   if(habit==="1.9") return 6;
   if(habit==="1.725") return 5;
@@ -572,7 +568,7 @@ function chooseWeeksAndStep(diff, sex, age, habit, fitnessType){
   weeks = clamp(weeks, 3, 5);
   return {weeks, step};
 }
-function generateCarbPlan(currentCarb, weeks){
+function generateCarbPlan(currentCarb, weeks, habit, fitnessType, stepPerDay){
   const days = Math.max(2, weeks*7);
   const target = 100;
   const diff = currentCarb - target;
@@ -590,6 +586,7 @@ function generateCarbPlan(currentCarb, weeks){
     v = clamp(v, target, Math.max(currentCarb, 140));
     arr.push(v);
   }
+
   for(let d=1; d<days; d++){
     if(arr[d] > arr[d-1]) arr[d] = arr[d-1];
     const idealDrop = diff/(days-1);
@@ -599,6 +596,7 @@ function generateCarbPlan(currentCarb, weeks){
     const clipped = clamp(prevDrop, minDelta, maxDelta);
     arr[d] = arr[d-1] - clipped;
   }
+
   const rounded = arr.map(v=>Math.round(v));
   const deltaEnd = rounded[rounded.length-1] - target;
   if(deltaEnd !== 0){
@@ -653,13 +651,13 @@ function drawCarbChart({series, weekIndex}){
   const xTo=i=> padL + (i/(seg.length-1))*plotW;
   const yTo=v=> padT + (1-(v-minY)/yRange)*plotH;
 
-  /* grid, axes, labels, line（通常描画）→ canvas自体を .softBlur でぼかす */
   ctx.strokeStyle=getComputedStyle(document.body).getPropertyValue('--grid').trim();
   ctx.lineWidth=1;
   for(let i=0;i<=3;i++){
     const val=minY+(yRange/3)*i, yy=yTo(val);
     ctx.beginPath(); ctx.moveTo(padL,yy); ctx.lineTo(W-padR,yy); ctx.stroke();
   }
+
   ctx.strokeStyle=getComputedStyle(document.body).getPropertyValue('--axisLine').trim();
   ctx.lineWidth=1.5;
   ctx.beginPath(); ctx.moveTo(padL, yTo(minY)); ctx.lineTo(W-padR, yTo(minY)); ctx.stroke();
@@ -766,32 +764,6 @@ if(!window._weekBtnBound){
   });
 })();
 
-/* “??? 表示”のマスク適用（指定項目のみ） */
-function maskNumbers(){
-  // あなたのプラン
-  $("weeksNum").textContent = "???";
-  $("goalCarb").textContent = "???";
-
-  // あなたの目安（TRANSITION DIET）
-  $("kcal").textContent = "???";
-  $("p").textContent = "???";
-  $("f").textContent = "???";
-  $("c").textContent = "???";
-  $("pkcal").textContent = "???";
-  $("fkcal").textContent = "???";
-  $("ckcal").textContent = "???";
-
-  $("k").textContent = "???";
-  $("na").textContent = "???";
-  $("mg").textContent = "???";
-
-  // 食材別
-  ["gMeat","gFish","gEggs","gDairy","gGroot","gFruit",
-   "kMeat","kFish","kEggs","kDairy","kGroot","kFruit"].forEach(id=>{
-    $(id).textContent = "???";
-  });
-}
-
 /* メイン計算 */
 function calc(){
   if(!requireFilled()) return;
@@ -804,23 +776,20 @@ function calc(){
   const af=parseFloat($("habit").value)||1.2;
   const fitnessType = ($("habit").value==="1.2") ? "none" : $("fitnessType").value;
 
-  // 代謝
   const bmi = w / Math.pow(h/100,2);
   const bmr = (sex==="M") ? (10*w + 6.25*h - 5*age + 5) : (10*w + 6.25*h - 5*age - 161);
   const dayF = dailyAdjustment($("habit").value, fitnessType);
   const tdee = bmr * af * dayF;
 
-  // 現在糖質・週数
   const curCarb = currentCarbValue(sex);
   const selVal = $("curCarbSel").value;
   const isEstimated = (selVal==="unknown");
   const unitText = isEstimated ? "g/日（推定）" : "g/日（目安）";
   const diff = Math.max(0, curCarb - 100);
   const ws = chooseWeeksAndStep(diff, sex, age, $("habit").value, fitnessType);
-  const weeks = ws.weeks;
-  const series = generateCarbPlan(curCarb, weeks);
+  const weeks = ws.weeks; const stepPerDay = ws.step;
+  const series = generateCarbPlan(curCarb, weeks, $("habit").value, fitnessType, stepPerDay);
 
-  // マクロ（内部計算は通常通り）※表示は後で???に
   const PF_DEFAULT = 1.6;
   let carb_g = 100;
   let protein_g = w*PF_DEFAULT;
@@ -838,21 +807,19 @@ function calc(){
     pk = protein_g*4; ck = carb_g*4; fk = fat_g*9; kcal = pk+ck+fk;
     if(adj.adjusted) warnMsg = adj.reason;
   }
+  if(!kcal){ fk=fat_g*9; kcal=pk+ck+fk; }
 
-  // 表示（基礎データは通常表示）
   $("bmi").textContent=bmi.toFixed(2);
   $("bmr").textContent=Math.round(bmr).toLocaleString();
   $("tdee").textContent=Math.round(tdee).toLocaleString();
   $("bmiClassTxt").textContent=`BMI区分：${classText(bmi)}｜タンパク質 1.6g/kg｜日別補正 ×${dayF.toFixed(2)}（±12%内）`;
 
-  // あなたのプラン（現在糖質のみ通常表示）
   $("curCarbLabel").textContent = "現在の糖質量";
   $("curCarbShow").textContent = curCarb.toLocaleString();
   $("curCarbUnit").textContent = unitText;
-  $("weeksNum").textContent = weeks;     // 一旦セットし…
-  $("goalCarb").textContent = "100";     // レイアウト維持のためセット
+  $("weeksNum").textContent = weeks;
+  $("nowGoalCard").style.display="block";
 
-  // あなたの目安（中身は通常計算→バー反映）
   $("kcal").textContent=Math.round(kcal).toLocaleString();
   $("p").textContent=Math.round(protein_g);
   $("f").textContent=Math.round(fat_g);
@@ -873,7 +840,6 @@ function calc(){
     `運動習慣：${habitLabel}｜フィットネス：${fitnessLabelMap[fitnessType]||"—"}｜` +
     `Na：4000mg+糖質≤130g→+600mg+AF補正→+300mg｜K：3500mg+AF補正→+k｜Mg：400mg+AF≥1.55→+50mg`;
 
-  // 食材配分（バーは通常反映）
   const parts = computeFoodDistribution(kcal, fitnessType);
   $("kMeat").textContent  = Math.round(parts.kMeat);
   $("kFish").textContent  = Math.round(parts.kFish);
@@ -892,18 +858,12 @@ function calc(){
   updateFoodBars({meat:parts.kMeat,fish:parts.kFish,eggs:parts.kEggs,dairy:parts.kDairy,groot:parts.kGroot,fruit:parts.kFruit},kcal);
   updateBars(pk, fk, ck, kcal);
 
-  // 週ボタン＆チャート
   buildWeekButtons(weeks);
   drawCarbChart({series, weekIndex:0});
 
-  // 表示
   $("baseCard").style.display="block";
   $("macroCard").style.display="block";
   $("mixCard").style.display="block";
-  $("nowGoalCard").style.display="block";
-
-  // 指定項目は “???” にマスク
-  maskNumbers();
 }
 
 /* BMI区分テキスト */
@@ -965,7 +925,7 @@ function restoreFormFresh(){
 }
 if(!restoreFromSessionAndAutoCalc()){ restoreFormFresh(); }
 
-/* リサイズ時の再描画（ぼかしはCSSなのでそのまま適用） */
+/* リサイズ時の再描画 */
 let _resizeId;
 window.addEventListener('resize', ()=>{
   cancelAnimationFrame(_resizeId);
