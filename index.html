@@ -496,6 +496,13 @@ function closePresetMenu(){
   const menu = $("presetMenu");
   if(menu) menu.classList.remove("show");
 }
+function detachPresetSelection(){
+  const sel = $("presetSelect");
+  if(sel){
+    sel.value = "";
+  }
+  localStorage.removeItem(LAST_PRESET_KEY);
+}
 function loadPresets(){
   try{
     return JSON.parse(localStorage.getItem(PRESET_KEY) || "{}");
@@ -816,8 +823,10 @@ function enforceHabitRules(){
 }
 
 /* 計算ボタン */
-$("calcBtn").addEventListener("click", ()=>{
+    $("calcBtn").addEventListener("click", ()=>{
   if(requireFilled()){
+    detachPresetSelection();
+
     if(document.activeElement && typeof document.activeElement.blur === 'function'){ document.activeElement.blur(); }
     const vp = document.querySelector('meta[name="viewport"]');
     if(vp){
@@ -1518,8 +1527,13 @@ function restoreFormFresh(){
   window._grainStartG = null;
 }
 
-if(!restoreFromSessionAndAutoCalc()){ restoreFormFresh(); }
-restoreLastPreset();
+const restoredAutoCalc = restoreFromSessionAndAutoCalc();
+
+if(!restoredAutoCalc){
+  restoreFormFresh();
+  restoreLastPreset();
+}
+
 refreshPresetSelect();
 
 let _resizeId;
