@@ -465,6 +465,21 @@ function getCurrentFormData(){
     rootsSel:$("rootsSel") ? $("rootsSel").value : ""
   };
 }
+function isSamePresetData(a, b){
+  if(!a || !b) return false;
+  return (
+    (a.sex ?? "") === (b.sex ?? "") &&
+    (a.age ?? "") === (b.age ?? "") &&
+    (a.height ?? "") === (b.height ?? "") &&
+    (a.weight ?? "") === (b.weight ?? "") &&
+    (a.habit ?? "") === (b.habit ?? "") &&
+    (a.fitnessType ?? "") === (b.fitnessType ?? "") &&
+    (a.curCarbSel ?? "") === (b.curCarbSel ?? "") &&
+    (a.riceSel ?? "") === (b.riceSel ?? "") &&
+    (a.breadSel ?? "") === (b.breadSel ?? "") &&
+    (a.rootsSel ?? "") === (b.rootsSel ?? "")
+  );
+}
 function applyFormData(d){
   if(!d) return;
 
@@ -671,8 +686,9 @@ function resetFormAll(){
 
 /* テーマ */
 function applyThemeFromStorage(){
-  document.body.classList.add('light');
-  localStorage.setItem('theme', 'light');
+  const saved = localStorage.getItem('theme');
+  const isLight = saved !== 'dark';
+  document.body.classList.toggle('light', isLight);
   updateThemeBtn();
   if(window._lastChartArgs) drawCarbChart(window._lastChartArgs);
 }
@@ -818,6 +834,18 @@ function enforceHabitRules(){
 /* 計算ボタン */
 $("calcBtn").addEventListener("click", ()=>{
   if(requireFilled()){
+    const selectedName = $("presetSelect") ? $("presetSelect").value : "";
+    const presets = loadPresets();
+    const currentData = getCurrentFormData();
+    const selectedPresetData = selectedName && presets[selectedName] ? presets[selectedName] : null;
+
+    if(selectedPresetData && !isSamePresetData(currentData, selectedPresetData)){
+      if($("presetSelect")) $("presetSelect").value = "";
+      localStorage.removeItem(LAST_PRESET_KEY);
+    }else if(selectedName){
+      localStorage.setItem(LAST_PRESET_KEY, selectedName);
+    }
+
     if(document.activeElement && typeof document.activeElement.blur === 'function'){ document.activeElement.blur(); }
     const vp = document.querySelector('meta[name="viewport"]');
     if(vp){
