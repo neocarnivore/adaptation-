@@ -697,7 +697,7 @@ function applyThemeFromStorage(){
   const isLight = saved === null ? true : saved === 'light';
   document.body.classList.toggle('light', isLight);
   updateThemeBtn();
-  if(window._lastDrawArgs) drawWeightChart(window._lastDrawArgs);
+  if(window._lastChartArgs) drawCarbChart(window._lastChartArgs);
 }
 function toggleTheme(){
   document.body.classList.toggle('light');
@@ -1568,6 +1568,10 @@ refreshPresetSelect();
 let _resizeId;
 window.addEventListener('resize', ()=>{
   cancelAnimationFrame(_resizeId);
-  _resizeId = requestAnimationFrame(()=>{ if(window._lastChartArgs) drawCarbChart(window._lastChartArgs); });
+  _resizeId = requestAnimationFrame(()=>{
+    if(window._lastChartArgs) drawCarbChart(window._lastChartArgs);
+  });
 });
 </script>
+</body>
+</html>
