@@ -498,9 +498,7 @@ function closePresetMenu(){
 }
 function detachPresetSelection(){
   const sel = $("presetSelect");
-  if(sel){
-    sel.value = "";
-  }
+  if(sel) sel.value = "";
   localStorage.removeItem(LAST_PRESET_KEY);
 }
 function loadPresets(){
@@ -823,10 +821,9 @@ function enforceHabitRules(){
 }
 
 /* 計算ボタン */
-    $("calcBtn").addEventListener("click", ()=>{
+$("calcBtn").addEventListener("click", ()=>{
   if(requireFilled()){
     detachPresetSelection();
-
     if(document.activeElement && typeof document.activeElement.blur === 'function'){ document.activeElement.blur(); }
     const vp = document.querySelector('meta[name="viewport"]');
     if(vp){
@@ -1543,4 +1540,3 @@ window.addEventListener('resize', ()=>{
 });
 </script>
 </body>
-</html>
