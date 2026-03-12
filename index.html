@@ -465,23 +465,6 @@ function getCurrentFormData(){
     rootsSel:$("rootsSel") ? $("rootsSel").value : ""
   };
 }
-
-function isSamePresetData(a, b){
-  if(!a || !b) return false;
-  return (
-    (a.sex ?? "") === (b.sex ?? "") &&
-    (a.age ?? "") === (b.age ?? "") &&
-    (a.height ?? "") === (b.height ?? "") &&
-    (a.weight ?? "") === (b.weight ?? "") &&
-    (a.habit ?? "") === (b.habit ?? "") &&
-    (a.fitnessType ?? "") === (b.fitnessType ?? "") &&
-    (a.curCarbSel ?? "") === (b.curCarbSel ?? "") &&
-    (a.riceSel ?? "") === (b.riceSel ?? "") &&
-    (a.breadSel ?? "") === (b.breadSel ?? "") &&
-    (a.rootsSel ?? "") === (b.rootsSel ?? "")
-  );
-}
-
 function applyFormData(d){
   if(!d) return;
 
@@ -512,11 +495,6 @@ function applyFormData(d){
 function closePresetMenu(){
   const menu = $("presetMenu");
   if(menu) menu.classList.remove("show");
-}
-function detachPresetSelection(){
-  const sel = $("presetSelect");
-  if(sel) sel.value = "";
-  localStorage.removeItem(LAST_PRESET_KEY);
 }
 function loadPresets(){
   try{
@@ -693,9 +671,8 @@ function resetFormAll(){
 
 /* テーマ */
 function applyThemeFromStorage(){
-  const saved = localStorage.getItem('theme');
-  const isLight = saved === null ? true : saved === 'light';
-  document.body.classList.toggle('light', isLight);
+  document.body.classList.add('light');
+  localStorage.setItem('theme', 'light');
   updateThemeBtn();
   if(window._lastChartArgs) drawCarbChart(window._lastChartArgs);
 }
@@ -841,17 +818,6 @@ function enforceHabitRules(){
 /* 計算ボタン */
 $("calcBtn").addEventListener("click", ()=>{
   if(requireFilled()){
-    const selectedName = $("presetSelect") ? $("presetSelect").value : "";
-    const presets = loadPresets();
-    const currentData = getCurrentFormData();
-    const selectedPresetData = selectedName && presets[selectedName] ? presets[selectedName] : null;
-
-    if(selectedPresetData && !isSamePresetData(currentData, selectedPresetData)){
-      detachPresetSelection();
-    }else if(selectedName){
-      localStorage.setItem(LAST_PRESET_KEY, selectedName);
-    }
-
     if(document.activeElement && typeof document.activeElement.blur === 'function'){ document.activeElement.blur(); }
     const vp = document.querySelector('meta[name="viewport"]');
     if(vp){
@@ -865,7 +831,7 @@ $("calcBtn").addEventListener("click", ()=>{
     location.reload();
   }else{
     const pressed = $("calcBtn").getAttribute("aria-pressed")==="true";
-    $("calcBtn").setAttribute("aria-pressed", pressed?"false":"true");
+    $("calcBtn").setAttribute("aria-pressed", pressed ? "false" : "true");
   }
 });
 
@@ -1485,34 +1451,30 @@ function saveFormToSession(){
   sessionStorage.setItem("transitionPreviewAutoFormV1", JSON.stringify(data));
 }
 function restoreFromSessionAndAutoCalc(){
-  const raw = sessionStorage.getItem("transitionAutoFormV7");
+  const raw = sessionStorage.getItem("transitionPreviewAutoFormV1");
   const auto = sessionStorage.getItem("autocalc")==="1";
   if(!raw || !auto) return false;
+
   try{
     const d = JSON.parse(raw);
-    if(d.sex) $("sex").value=d.sex;
-    if(d.age) $("age").value=d.age;
-    if(d.height) $("height").value=d.height;
-    if(d.weight) $("weight").value=d.weight;
-    if(d.habit) $("habit").value=d.habit;
-    if(d.fitnessType) $("fitnessType").value=d.fitnessType;
-    if(d.curCarbSel){ $("curCarbSel").value=d.curCarbSel; $("curCarbSel").dispatchEvent(new Event('change')); }
-    if(d.riceSel)  $("riceSel").value=d.riceSel;
-    if(d.breadSel) $("breadSel").value=d.breadSel;
-    if(d.rootsSel) $("rootsSel").value=d.rootsSel;
-
-    enforceHabitRules();
-
-    refreshPresetSelect();
-    const last = localStorage.getItem(LAST_PRESET_KEY);
-    const presets = loadPresets();
-    if(last && presets[last] && $("presetSelect")){
-      $("presetSelect").value = last;
+    if(d.sex) $("sex").value = d.sex;
+    if(d.age) $("age").value = d.age;
+    if(d.height) $("height").value = d.height;
+    if(d.weight) $("weight").value = d.weight;
+    if(d.habit) $("habit").value = d.habit;
+    if(d.fitnessType) $("fitnessType").value = d.fitnessType;
+    if(d.curCarbSel){
+      $("curCarbSel").value = d.curCarbSel;
+      $("curCarbSel").dispatchEvent(new Event('change'));
     }
-
+    if(d.riceSel) $("riceSel").value = d.riceSel;
+    if(d.breadSel) $("breadSel").value = d.breadSel;
+    if(d.rootsSel) $("rootsSel").value = d.rootsSel;
+    enforceHabitRules();
     calc();
   }catch{}
-  sessionStorage.removeItem("transitionAutoFormV7");
+
+  sessionStorage.removeItem("transitionPreviewAutoFormV1");
   sessionStorage.removeItem("autocalc");
   return true;
 }
@@ -1556,22 +1518,14 @@ function restoreFormFresh(){
   window._grainStartG = null;
 }
 
-const restoredAutoCalc = restoreFromSessionAndAutoCalc();
-
-if(!restoredAutoCalc){
-  restoreFormFresh();
-  restoreLastPreset();
-}
-
+if(!restoreFromSessionAndAutoCalc()){ restoreFormFresh(); }
+restoreLastPreset();
 refreshPresetSelect();
 
 let _resizeId;
 window.addEventListener('resize', ()=>{
   cancelAnimationFrame(_resizeId);
-  _resizeId = requestAnimationFrame(()=>{
-    if(window._lastChartArgs) drawCarbChart(window._lastChartArgs);
-  });
+  _resizeId = requestAnimationFrame(()=>{ if(window._lastChartArgs) drawCarbChart(window._lastChartArgs); });
 });
 </script>
 </body>
-</html>
