@@ -1485,7 +1485,7 @@ function saveFormToSession(){
   sessionStorage.setItem("transitionPreviewAutoFormV1", JSON.stringify(data));
 }
 function restoreFromSessionAndAutoCalc(){
-  const raw = sessionStorage.getItem("transitionAutoFormV7");
+  const raw = sessionStorage.getItem("transitionPreviewAutoFormV1");
   const auto = sessionStorage.getItem("autocalc")==="1";
   if(!raw || !auto) return false;
   try{
@@ -1512,7 +1512,7 @@ function restoreFromSessionAndAutoCalc(){
 
     calc();
   }catch{}
-  sessionStorage.removeItem("transitionAutoFormV7");
+  sessionStorage.removeItem("transitionPreviewAutoFormV1");
   sessionStorage.removeItem("autocalc");
   return true;
 }
