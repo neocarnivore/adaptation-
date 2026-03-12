@@ -1485,30 +1485,34 @@ function saveFormToSession(){
   sessionStorage.setItem("transitionPreviewAutoFormV1", JSON.stringify(data));
 }
 function restoreFromSessionAndAutoCalc(){
-  const raw = sessionStorage.getItem("transitionPreviewAutoFormV1");
+  const raw = sessionStorage.getItem("transitionAutoFormV7");
   const auto = sessionStorage.getItem("autocalc")==="1";
   if(!raw || !auto) return false;
-
   try{
     const d = JSON.parse(raw);
-    if(d.sex) $("sex").value = d.sex;
-    if(d.age) $("age").value = d.age;
-    if(d.height) $("height").value = d.height;
-    if(d.weight) $("weight").value = d.weight;
-    if(d.habit) $("habit").value = d.habit;
-    if(d.fitnessType) $("fitnessType").value = d.fitnessType;
-    if(d.curCarbSel){
-      $("curCarbSel").value = d.curCarbSel;
-      $("curCarbSel").dispatchEvent(new Event('change'));
-    }
-    if(d.riceSel) $("riceSel").value = d.riceSel;
-    if(d.breadSel) $("breadSel").value = d.breadSel;
-    if(d.rootsSel) $("rootsSel").value = d.rootsSel;
+    if(d.sex) $("sex").value=d.sex;
+    if(d.age) $("age").value=d.age;
+    if(d.height) $("height").value=d.height;
+    if(d.weight) $("weight").value=d.weight;
+    if(d.habit) $("habit").value=d.habit;
+    if(d.fitnessType) $("fitnessType").value=d.fitnessType;
+    if(d.curCarbSel){ $("curCarbSel").value=d.curCarbSel; $("curCarbSel").dispatchEvent(new Event('change')); }
+    if(d.riceSel)  $("riceSel").value=d.riceSel;
+    if(d.breadSel) $("breadSel").value=d.breadSel;
+    if(d.rootsSel) $("rootsSel").value=d.rootsSel;
+
     enforceHabitRules();
+
+    refreshPresetSelect();
+    const last = localStorage.getItem(LAST_PRESET_KEY);
+    const presets = loadPresets();
+    if(last && presets[last] && $("presetSelect")){
+      $("presetSelect").value = last;
+    }
+
     calc();
   }catch{}
-
-  sessionStorage.removeItem("transitionPreviewAutoFormV1");
+  sessionStorage.removeItem("transitionAutoFormV7");
   sessionStorage.removeItem("autocalc");
   return true;
 }
